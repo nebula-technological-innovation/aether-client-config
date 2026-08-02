@@ -1,0 +1,605 @@
+// ─── Agent Type System ───────────────────────────────────────────────
+// Defines all agent types, capabilities, and universal tool access.
+
+export type AgentCategory =
+  'engineering' | 'business' | 'operations' | 'creative' | 'intelligence' | 'custom';
+
+export type AgentTypeKey =
+  // Engineering
+  | 'architect'
+  | 'builder'
+  | 'devops'
+  | 'qa'
+  | 'security'
+  | 'data-scientist'
+  // Business
+  | 'analyst'
+  | 'finance'
+  | 'sales'
+  | 'marketer'
+  | 'legal'
+  // Operations
+  | 'operator'
+  | 'support'
+  | 'hr'
+  // Creative
+  | 'writer'
+  | 'designer'
+  // Intelligence
+  | 'researcher'
+  | 'scout'
+  | 'orchestrator'
+  // Custom
+  | 'custom';
+
+// ─── Universal Capabilities (every agent gets these) ────────────────
+
+export interface BrowserCapabilities {
+  readonly navigate: true;
+  readonly screenshot: true;
+  readonly extract_text: true;
+  readonly extract_links: true;
+  readonly fill_form: true;
+  readonly click: true;
+  readonly evaluate_js: true;
+  readonly scroll: true;
+  readonly wait_for_element: true;
+  readonly get_html: true;
+}
+
+export interface ToolCapabilities {
+  readonly call_tool: true; // Execute any registered MCP tool
+  readonly list_tools: true; // List available tools
+  readonly get_tool_schema: true; // Get tool input/output schema
+  readonly create_tool: true; // Define a new tool from a prompt
+  readonly test_tool: true; // Test a tool definition
+  readonly register_tool: true; // Register tool with MCP server
+}
+
+export interface MCPCapabilities {
+  readonly create_server: true; // Scaffold a new MCP server
+  readonly add_tool_to_server: true; // Add tool to existing MCP server
+  readonly list_servers: true; // List connected MCP servers
+  readonly test_server: true; // Test MCP server health
+  readonly package_server: true; // Package MCP server for distribution
+}
+
+export interface AgentCapabilities {
+  readonly browser: BrowserCapabilities;
+  readonly tools: ToolCapabilities;
+  readonly mcp: MCPCapabilities;
+  readonly custom: readonly string[]; // Agent-specific capabilities
+}
+
+// ─── Agent Definition ───────────────────────────────────────────────
+
+export interface AgentDefinition {
+  readonly type: AgentTypeKey;
+  readonly category: AgentCategory;
+  readonly label: string;
+  readonly description: string;
+  readonly model: string;
+  readonly systemPrompt: string;
+  readonly skills: readonly string[];
+  readonly capabilities: AgentCapabilities;
+  readonly tools: readonly string[]; // Default MCP tools available
+  readonly maxConcurrentTasks: number;
+  readonly canSpawnSubagents: boolean;
+}
+
+// ─── Universal capabilities shared by ALL agents ────────────────────
+
+export const universalBrowser: BrowserCapabilities = {
+  navigate: true,
+  screenshot: true,
+  extract_text: true,
+  extract_links: true,
+  fill_form: true,
+  click: true,
+  evaluate_js: true,
+  scroll: true,
+  wait_for_element: true,
+  get_html: true,
+};
+
+export const universalTools: ToolCapabilities = {
+  call_tool: true,
+  list_tools: true,
+  get_tool_schema: true,
+  create_tool: true,
+  test_tool: true,
+  register_tool: true,
+};
+
+export const universalMCP: MCPCapabilities = {
+  create_server: true,
+  add_tool_to_server: true,
+  list_servers: true,
+  test_server: true,
+  package_server: true,
+};
+
+// ─── Built-in Agent Definitions ────────────────────────────────────
+
+export const agentDefinitions: readonly AgentDefinition[] = [
+  // ═══ ENGINEERING ═══
+  {
+    type: 'architect',
+    category: 'engineering',
+    label: 'Architect',
+    description: 'System design, dependency mapping, release planning, architecture reviews',
+    model: 'aether/vega-v1',
+    systemPrompt:
+      'You are a senior software architect. Design systems for scalability, maintainability, and performance. Always consider trade-offs, document decisions (ADRs), and map dependencies before implementation.',
+    skills: ['nebula-llm-as-a-service', 'nebula-content-generation'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: ['design_diagram', 'adr_generate', 'dependency_map', 'capacity_plan'],
+    },
+    tools: ['filesystem', 'github', 'fetch'],
+    maxConcurrentTasks: 5,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'builder',
+    category: 'engineering',
+    label: 'Builder',
+    description: 'Feature implementation, refactors, migrations, code generation',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a senior full-stack engineer. Write production-quality code with tests. Follow existing patterns, handle errors explicitly, and document complex logic. Prefer composition over inheritance.',
+    skills: ['nebula-commerce', 'nebula-content-generation', 'nebula-income-digital-products'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: ['code_generate', 'code_refactor', 'test_generate', 'migrate_schema', 'review_pr'],
+    },
+    tools: ['filesystem', 'github', 'docker', 'postgresql'],
+    maxConcurrentTasks: 8,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'devops',
+    category: 'engineering',
+    label: 'DevOps',
+    description: 'CI/CD, containerization, infrastructure-as-code, monitoring',
+    model: 'aether/atlas-v1',
+    systemPrompt:
+      'You are a DevOps engineer. Automate everything, prefer declarative configs, implement blue-green deployments, and ensure observability. Security is not optional.',
+    skills: ['nebula-llm-as-a-service', 'nebula-telecom'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'deploy_service',
+        'manage_containers',
+        'configure_ci',
+        'setup_monitoring',
+        'scale_infrastructure',
+      ],
+    },
+    tools: ['docker', 'filesystem', 'github', 'aws-knowledge'],
+    maxConcurrentTasks: 6,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'qa',
+    category: 'engineering',
+    label: 'QA Engineer',
+    description: 'Test strategy, test generation, bug reproduction, quality gates',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a QA engineer. Think adversarially. Break things before users do. Write comprehensive test suites covering happy paths, edge cases, and failure modes. Automate regression testing.',
+    skills: [],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'generate_tests',
+        'run_test_suite',
+        'reproduce_bug',
+        'performance_test',
+        'accessibility_audit',
+      ],
+    },
+    tools: ['filesystem', 'github', 'fetch'],
+    maxConcurrentTasks: 10,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'security',
+    category: 'engineering',
+    label: 'Security',
+    description: 'Threat modeling, vulnerability scanning, policy enforcement, audit trails',
+    model: 'aether/draco-v1',
+    systemPrompt:
+      'You are a security engineer. Assume breach. Validate all inputs, enforce least privilege, audit everything. Flag hardcoded secrets, missing auth, and insecure defaults immediately.',
+    skills: ['nebula-llm-as-a-service'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'scan_vulnerabilities',
+        'audit_credentials',
+        'review_access_policy',
+        'generate_sbom',
+        'threat_model',
+      ],
+    },
+    tools: ['filesystem', 'github', 'docker'],
+    maxConcurrentTasks: 5,
+    canSpawnSubagents: false,
+  },
+  {
+    type: 'data-scientist',
+    category: 'engineering',
+    label: 'Data Scientist',
+    description: 'Data analysis, ML model training, feature engineering, experiment tracking',
+    model: 'aether/vega-v1',
+    systemPrompt:
+      'You are a data scientist. Start with exploratory analysis, validate assumptions with data, and communicate findings clearly. Always version your experiments and track metrics.',
+    skills: ['nebula-llm-as-a-service', 'nebula-income-ai-economy'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'analyze_dataset',
+        'train_model',
+        'feature_engineer',
+        'run_experiment',
+        'generate_report',
+      ],
+    },
+    tools: ['filesystem', 'postgresql', 'fetch'],
+    maxConcurrentTasks: 3,
+    canSpawnSubagents: true,
+  },
+
+  // ═══ BUSINESS ═══
+  {
+    type: 'analyst',
+    category: 'business',
+    label: 'Business Analyst',
+    description: 'Business ops, memos, GTM strategy, competitive analysis',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a business analyst. Data-driven decisions only. Structure every analysis with: situation, complication, resolution. Quantify impact. Always cite sources.',
+    skills: ['nebula-commerce', 'nebula-income-affiliate', 'nebula-income-payments-revenue'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'market_research',
+        'competitive_analysis',
+        'financial_model',
+        'generate_memo',
+        'kpi_dashboard',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'postgresql'],
+    maxConcurrentTasks: 5,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'finance',
+    category: 'business',
+    label: 'Finance',
+    description: 'Financial modeling, revenue tracking, forecasting, invoicing',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a financial analyst. Track every dollar. Build models with clear assumptions. Flag anomalies immediately. Revenue is vanity, profit is sanity, cash is reality.',
+    skills: ['nebula-income-payments-revenue', 'nebula-income-affiliate'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'revenue_report',
+        'forecast_model',
+        'invoice_generate',
+        'expense_track',
+        'tax_calculate',
+      ],
+    },
+    tools: ['postgresql', 'stripe', 'filesystem'],
+    maxConcurrentTasks: 3,
+    canSpawnSubagents: false,
+  },
+  {
+    type: 'sales',
+    category: 'business',
+    label: 'Sales Agent',
+    description: 'Lead generation, pipeline management, outreach, deal closing',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a sales agent. Qualify leads fast, personalize outreach, track pipeline rigorously. Focus on solving customer problems, not pushing features. Follow up relentlessly.',
+    skills: ['nebula-income-shopify', 'nebula-income-affiliate', 'nebula-income-digital-products'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'find_leads',
+        'send_outreach',
+        'qualify_lead',
+        'generate_proposal',
+        'track_pipeline',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'postgresql', 'whatsapp-bridge'],
+    maxConcurrentTasks: 10,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'marketer',
+    category: 'business',
+    label: 'Marketer',
+    description: 'Campaign management, content strategy, SEO, social media, ads',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a growth marketer. Every campaign needs a hypothesis, metrics, and a kill switch. A/B test everything. Content is king, distribution is queen.',
+    skills: ['nebula-content-generation', 'nebula-income-affiliate', 'nebula-income-ai-courses'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'create_campaign',
+        'seo_audit',
+        'social_schedule',
+        'ad_optimize',
+        'content_calendar',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'whatsapp-bridge'],
+    maxConcurrentTasks: 6,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'legal',
+    category: 'business',
+    label: 'Legal',
+    description: 'Contract review, compliance checks, terms of service, privacy policies',
+    model: 'aether/draco-v1',
+    systemPrompt:
+      'You are a legal analyst. Flag risks clearly. Draft precise language. Always consider jurisdictional differences. When in doubt, recommend human review.',
+    skills: [],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'review_contract',
+        'draft_terms',
+        'compliance_check',
+        'privacy_audit',
+        'risk_assess',
+      ],
+    },
+    tools: ['filesystem', 'fetch'],
+    maxConcurrentTasks: 3,
+    canSpawnSubagents: false,
+  },
+
+  // ═══ OPERATIONS ═══
+  {
+    type: 'operator',
+    category: 'operations',
+    label: 'Operator',
+    description: 'Infra management, deployment automation, service orchestration',
+    model: 'aether/atlas-v1',
+    systemPrompt:
+      'You are an operations engineer. Automate runbooks. Monitor everything. Alert on symptoms, not causes. Mean time to recovery matters more than mean time between failures.',
+    skills: ['nebula-telecom', 'nebula-llm-as-a-service', 'nebula-whatsapp-integration'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'manage_services',
+        'run_automation',
+        'health_check',
+        'incident_respond',
+        'capacity_monitor',
+      ],
+    },
+    tools: ['docker', 'redis', 'filesystem', 'postgresql'],
+    maxConcurrentTasks: 8,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'support',
+    category: 'operations',
+    label: 'Support Agent',
+    description: 'Customer support, ticket triage, FAQ, escalation management',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a customer support agent. Empathize first, solve second. Never blame the customer. Escalate when you cannot resolve in 2 turns. Document solutions for the knowledge base.',
+    skills: ['nebula-whatsapp-integration', 'nebula-content-generation'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'triage_ticket',
+        'search_kb',
+        'escalate_issue',
+        'generate_response',
+        'update_ticket',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'whatsapp-bridge'],
+    maxConcurrentTasks: 15,
+    canSpawnSubagents: false,
+  },
+  {
+    type: 'hr',
+    category: 'operations',
+    label: 'HR Agent',
+    description: 'Recruitment, onboarding, policy management, employee engagement',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are an HR agent. Be fair, consistent, and bias-aware. Document everything. Protect employee privacy. Streamline processes without losing the human touch.',
+    skills: [],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'screen_candidates',
+        'schedule_interview',
+        'onboard_employee',
+        'manage_policy',
+        'track_engagement',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'postgresql'],
+    maxConcurrentTasks: 5,
+    canSpawnSubagents: false,
+  },
+
+  // ═══ CREATIVE ═══
+  {
+    type: 'writer',
+    category: 'creative',
+    label: 'Writer',
+    description: 'Technical writing, copywriting, documentation, blog posts',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a professional writer. Clarity beats cleverness. Write for scanning first, reading second. Every sentence should earn its place. Match tone to audience.',
+    skills: ['nebula-content-generation', 'nebula-income-ai-courses'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: ['write_article', 'write_docs', 'write_copy', 'edit_content', 'generate_outline'],
+    },
+    tools: ['fetch', 'filesystem'],
+    maxConcurrentTasks: 5,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'designer',
+    category: 'creative',
+    label: 'Designer',
+    description: 'UI/UX design, wireframing, design systems, asset generation',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a product designer. Design for accessibility first. Consistency builds trust. Prototype fast, iterate faster. Every pixel should have a purpose.',
+    skills: ['nebula-content-generation'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'create_wireframe',
+        'design_system',
+        'generate_assets',
+        'user_flow',
+        'accessibility_check',
+      ],
+    },
+    tools: ['fetch', 'filesystem'],
+    maxConcurrentTasks: 3,
+    canSpawnSubagents: true,
+  },
+
+  // ═══ INTELLIGENCE ═══
+  {
+    type: 'researcher',
+    category: 'intelligence',
+    label: 'Researcher',
+    description: 'Deep research, fact-checking, literature review, competitive intelligence',
+    model: 'aether/vega-v1',
+    systemPrompt:
+      'You are a research analyst. Triangulate sources. Distinguish correlation from causation. Always cite sources with URLs. Flag uncertainty explicitly. Quality over speed.',
+    skills: ['nebula-llm-as-a-service', 'nebula-content-generation'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'deep_research',
+        'fact_check',
+        'literature_review',
+        'source_triangulate',
+        'generate_brief',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'github'],
+    maxConcurrentTasks: 5,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'scout',
+    category: 'intelligence',
+    label: 'Scout',
+    description: 'Market monitoring, trend detection, opportunity identification, alerts',
+    model: 'aether/orion-v1',
+    systemPrompt:
+      'You are a market scout. Monitor continuously, alert on anomalies. Be early, not late. Distinguish signal from noise. Every alert must be actionable.',
+    skills: [
+      'nebula-income-rei-agents',
+      'nebula-income-stock-trader',
+      'nebula-income-vindex-marketplace',
+    ],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'monitor_market',
+        'detect_trends',
+        'find_opportunities',
+        'send_alert',
+        'generate_scout_report',
+      ],
+    },
+    tools: ['fetch', 'filesystem', 'redis'],
+    maxConcurrentTasks: 10,
+    canSpawnSubagents: true,
+  },
+  {
+    type: 'orchestrator',
+    category: 'intelligence',
+    label: 'Orchestrator',
+    description: 'Multi-agent coordination, task routing, workflow management, swarm control',
+    model: 'aether/vega-v1',
+    systemPrompt:
+      'You are an orchestrator. Decompose complex tasks into atomic subtasks. Route to the right agent. Monitor progress. Handle failures gracefully. Never block on a single agent.',
+    skills: ['nebula-llm-as-a-service', 'nebula-whatsapp-integration'],
+    capabilities: {
+      browser: universalBrowser,
+      tools: universalTools,
+      mcp: universalMCP,
+      custom: [
+        'spawn_agent',
+        'route_task',
+        'monitor_agents',
+        'aggregate_results',
+        'escalate_failure',
+      ],
+    },
+    tools: ['redis', 'filesystem', 'postgresql'],
+    maxConcurrentTasks: 20,
+    canSpawnSubagents: true,
+  },
+] as const;
+
+// ─── Lookups ───────────────────────────────────────────────────────
+
+export function getAgentByType(type: AgentTypeKey): AgentDefinition | undefined {
+  return agentDefinitions.find((a) => a.type === type);
+}
+
+export function getAgentsByCategory(category: AgentCategory): AgentDefinition[] {
+  return agentDefinitions.filter((a) => a.category === category);
+}
