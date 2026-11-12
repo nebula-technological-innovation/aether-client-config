@@ -1,47 +1,46 @@
-# Nebula/Aether first-party dependency and TypeScript quality gate
+# Nebula/Aether first-party dependency and TypeScript quality
 
-This repository is migrating away from paid GitHub Code Quality. This **draft-only**
-preflight is a reproducibility and evidence control, not a release authorization.
+This is an **offline quality gate** staged for review. It is not a production
+release approval and does not use GitHub's paid Code Quality product.
 
-## Verified scope
+## Reproducible controls
 
-- Uses Node.js built-ins and `git`; does **not** call GitHub Actions, npm install,
-  external code-quality services, model APIs, or a network service.
-- Validates exact checked-out Git SHA (optionally an expected SHA), tracked-tree
-  cleanliness, npm lockfile v3, the root dependency spec, and package-integrity entries.
-- Optional `--typecheck` invokes only the already installed, local
-  `node_modules/typescript/bin/tsc` with `--noEmit` and no shell.
-- Emits JSON with SHA-256 manifest digests and fail-closed status. It does not
-  publish credentials, merge code, deploy, or grant any production permission.
-- All nine synthetic contract tests passed in an isolated Node.js 22 environment,
-  but real repo build and installed dependency checks are **not verified**.
+- A real npm v3 `package-lock.json` generated with npm and lifecycle scripts
+  disabled, with package integrity entries and dependency-version evidence.
+- `scripts/native-quality.mjs` checks that the lockfile is part of exact Git
+  HEAD, validates clean tracked source, lockfile/root dependency consistency,
+  integrity entries, and locally installed TypeScript typecheck if requested.
+- Open-source Biome **2.5.12** is pinned as a dev dependency. The `lint` npm
+  script is a real strict lint gate, no longer a placeholder.
+- Builder capability defaults are explicit; TypeScript contract and native
+  lint checks are both required.
+- No automatic merge, deployment, paid model invocation, npm installation or
+  network access is granted to the native quality script.
 
-## Current blocker
+## Verified on an isolated Mac worktree
 
-**No root `package-lock.json` is committed.** The verifier intentionally
-returns a nonzero exit until a legitimate npm-generated lockfile is reviewed
-and installed. Do not fabricate package integrity hashes or bypass the gate.
+A frozen `npm ci --ignore-scripts --no-audit --no-fund` completed, the
+TypeScript build and typecheck passed, strict Biome lint passed, and **10/10**
+native contract tests passed. The public npm audit reported **0 advisories**
+for this local locked dependency tree. Reproduce on the exact final PR commit
+before approval. These checks are not a whole-company security certification.
 
-## Reproducible recovery procedure (requires an approved, clean worktree and a working registry)
+## Reproducible commands
 
 ```sh
-# In an isolated branch, check free disk and use the approved npm registry.
-npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-# Inspect package-lock.json and package.json before committing.
-git diff --check
-git diff -- package.json package-lock.json
-
-# Commit and verify the exact SHA; use this after the lockfile exists.
-node --test tests/native-quality.test.mjs
+# Run only on an approved clean checkout with sufficient free disk.
 npm ci --ignore-scripts --no-audit --no-fund
+npm run typecheck
+npm run build
+npm run lint
+npm run test
+npm audit --audit-level=high --no-fund
 node scripts/native-quality.mjs --typecheck --expected-sha "$(git rev-parse HEAD)"
 ```
 
-For fully offline operation use `npm ci --offline --ignore-scripts` **only if all
-locked tarballs are already cached**. Missing dependencies are a blocker, not a
-passing result. Follow the existing TypeScript `typecheck` command, then
-run project tests, dependency and license checks, and the broader Nebula native
-security policy independently. Do not automatically merge or promote builds.
+When intentionally updating the lockfile, use a dedicated review commit and
+`npm install --package-lock-only --ignore-scripts --no-audit --no-fund`,
+inspect all package and license changes, then repeat the frozen install and
+exact-commit suite. Avoid unverified overrides and untracked lockfiles.
 
-Related tracking: https://github.com/nebula-technological-innovation/nebula-monorepo/issues/1236
+Related portfolio rollout: https://github.com/nebula-technological-innovation/nebula-monorepo/issues/1236

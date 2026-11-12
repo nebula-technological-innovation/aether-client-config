@@ -131,7 +131,7 @@ export class CustomAgentBuilder {
     const custom = [...(this.config.capabilities?.custom ?? [])];
     custom.push(capability);
     this.config.capabilities = {
-      ...this.config.capabilities!,
+      ...(this.config.capabilities ?? { browser: universalBrowser, tools: universalTools, mcp: universalMCP, custom: [] }),
       custom,
     };
     return this;
@@ -139,7 +139,7 @@ export class CustomAgentBuilder {
 
   capabilities(custom: string[]): this {
     this.config.capabilities = {
-      ...this.config.capabilities!,
+      ...(this.config.capabilities ?? { browser: universalBrowser, tools: universalTools, mcp: universalMCP, custom: [] }),
       custom,
     };
     return this;
